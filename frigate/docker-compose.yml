@@ -1,0 +1,111 @@
+version: "3.9"
+services:
+
+  frigate:
+    container_name: frigate
+    privileged: true # this may not be necessary for all setups
+    restart: unless-stopped
+    image: ghcr.io/blakeblackshear/frigate:stable
+    shm_size: "64mb" # update for your cameras based on calculation above
+    devices:
+      - /dev/bus/usb:/dev/bus/usb # Passes the USB Coral, needs to be modified for other versions
+      - /dev/apex_0:/dev/apex_0 # Passes a PCIe Coral, follow driver instructions here https://coral.ai/docs/m2/get-started/#2a-on-linux
+      - /dev/video11:/dev/video11 # For Raspberry Pi 4B
+      - /dev/dri/renderD128:/dev/dri/renderD128 # For intel hwaccel, needs to be updated for your hardware
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ./config:/config
+      - ./media:/media/frigate
+      - ./gunpai:/gunpai
+      - type: tmpfs # Optional: 1GB of memory, reduces SSD/SD Card wear
+        target: /tmp/cache
+        tmpfs:
+          size: 1000000000
+    ports:
+      - "8971:8971"
+      - "5555:5000" # Internal unauthenticated access. Expose carefully.
+      - "8554:8554" # RTSP feeds
+      - "8555:8555/tcp" # WebRTC over tcp
+      - "8555:8555/udp" # WebRTC over udp
+    # environment:
+    #   FRIGATE_RTSP_PASSWORD: ""
+  mqtt:
+    container_name: mqtt
+    image: eclipse-mosquitto:1.6
+    ports:
+      - "1883:1883"
+  nginx:
+     image: alfg/nginx-rtmp
+     container_name: nginx-rtmp
+     platform: linux/amd64
+     ports:
+       - "1935:1935"    # RTMP port
+       - "8080:80"    # HLS playback port
+     volumes:
+       - ./config/nginx.conf:/etc/nginx/nginx.conf
+     restart: always
+  rtsp-server:
+    image: aler9/rtsp-simple-server
+    container_name: rtsp_server
+    ports:
+      - "3554:8554"   # RTSP server default port
+    volumes:
+      - ./config/rtsp-server.yml:/rtsp-simple-server.yml  # Custom RTSP server configuration
+      - ./videos:/videos               # Mount local folder containing video files
+    restart: always
+  # rtsp-server:
+  #   image: aler9/rtsp-simple-server
+  #   container_name: rtsp-server
+  #   ports:
+  #     - "3554:3554"
+  #   volumes:
+  #     - ./config/rtsp-server.yml:/rtsp-simple-server.yml
+  # yolov8-server:
+  #   image: yolov8-server:latest  # Use the local image created in the previous step or an alternative if built remotely
+  #   container_name: yolov8-server
+  #   build:
+  #    context: ./yolov8  # Path to the Dockerfile directory for the YOLOv8 server
+  #   ports:
+  #     - "8000:8000"  # YOLOv8 server port
+  #   restart: unless-stopped
+  # deepstack:
+  #   image: deepquestai/deepstack
+  #   container_name: deepstack
+  #   environment:
+  #     # - VISION-SCENE=True
+  #     - VISION-DETECTION=True
+  #     # - VISION-FACE=True
+  #   ports:
+  #     - "5001:5000"  # Exposing DeepStack on port 5001
+  #   volumes:
+  #     - localstorage:/datastore  # Persistent storage for DeepStack
+  # ffmpeg-rtsp:
+  #   image: jrottenberg/ffmpeg:latest
+  #   container_name: rtsp-streamer
+  #   depends_on:
+  #      - rtsp-server
+  #   command: >
+  #     ffmpeg
+  #     -re
+  #     -stream_loop -1
+  #     -i /input/cctv.mp4
+  #     -c:v copy
+  #     -f rtsp
+  #     -rtsp_transport tcp
+  #     rtsp://rtsp-server:8554/live
+  #   volumes:
+  #     - ./videos:/input               # Mount local folder containing video files
+  #   restart: always
+volumes:
+  localstorage:   
+  # onvif_simulator:
+  #   image: onvif/device_simulator
+  #   container_name: onvif_simulator
+  #   ports:
+  #     - "8080:8080"  # Map port 8080 on the host to port 8080 on the container
+  #   environment:
+  #     # Set any environment variables the container requires
+  #     ONVIF_USERNAME: "admin"
+  #     ONVIF_PASSWORD: "password"
+  #   restart: always
+  

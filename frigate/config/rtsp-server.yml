@@ -1,0 +1,18 @@
+# rtsp-config.yml
+protocols: [udp, tcp]  # Enable both UDP and TCP protocols
+# rtpPort: 8000          # Start of RTP port range for UDP
+readTimeout: 10s       # Timeout for reading client requests
+writeTimeout: 10s      # Timeout for writing responses to clients
+
+paths:
+  all:
+    # Set the stream source type
+  # inti:
+  #   source: publisher
+  #   runOnInit: ffmpeg -re -stream_loop -1 -i /videos/cctv.mp4 -c copy -f rtsp rtsp://localhost:8554/live
+  #   runOnInitRestart: yes
+    # Optional: add authentication for publishing and reading streams
+    # publishUser: myuser
+    # publishPass: mypassword
+    # readUser: viewer
+    # readPass: viewpassword

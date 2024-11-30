@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        Welcome
+    </div>
+    <div class="card-body">
+        <h5 class="card-title">Dashboard</h5>
+        <p class="card-text">This is your admin dashboard.</p>
+        <a href="/settings" class="btn btn-primary">Go to Settings</a>
+		
+    </div>
+	
+	<h1>HLS Playback Example</h1>
+	    <video id="video" controls autoplay style="width: 100%; max-width: 600px;"></video>
+
+	    <script>
+	        const video = document.getElementById('video');
+	        const hls = new Hls();
+	        const hlsUrl = "http://localhost:8080/hls/yolo.m3u8"; // Replace with your HLS .m3u8 URL
+
+	        if (Hls.isSupported()) {
+	            hls.loadSource(hlsUrl);
+	            hls.attachMedia(video);
+	            hls.on(Hls.Events.MANIFEST_PARSED, () => {
+	                video.play();
+	            });
+	        } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+	            // For Safari (which supports HLS natively)
+	            video.src = hlsUrl;
+	            video.addEventListener('loadedmetadata', () => {
+	                video.play();
+	            });
+	        } else {
+	            console.error("Your browser does not support HLS playback.");
+	        }
+	    </script>
+	
+</div>
+{% endblock %}
