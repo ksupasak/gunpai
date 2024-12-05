@@ -7,7 +7,7 @@ mqtt:
   topic_prefix: frigate       # Topic prefix for Frigate events
 go2rtc:
   streams:
-    cam1: # <- for RTSP streams
+    cam1: # <- for RTSP streams 
       # - rtsp://10.149.1.62:8554/stream/test # <- stream which supports video & aac audio
       - ffmpeg:rtsp://192.168.0.201:554/live    # <- stream which supports video & aac audio
     cam2: # <- for RTSP streams
