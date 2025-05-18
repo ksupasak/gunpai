@@ -157,8 +157,8 @@ core = GunpaiYolo("C001","E00101")
 
 submit(core)
 
-mode = 2
-detect_channel = 4
+mode = 3
+detect_channel = 0
 
 
 

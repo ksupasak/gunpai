@@ -61,6 +61,7 @@ class Panel:
                 self.caps.append(channel.cap) 
         # self.number_of_streams = len(params)        
         self.motion_detection_queues = [queue.Queue(maxsize=self.buffer_size) for _ in range(len(params))]
+        self.object_detection_queues =[queue.Queue(maxsize=self.buffer_size) for _ in range(len(params))]
         self.processing_queues = [queue.Queue(maxsize=self.buffer_size) for _ in range(len(params))]
         self.display_queues = [queue.Queue(maxsize=self.buffer_size) for _ in range(len(params))]
         self.capture_queues = [queue.Queue(maxsize=self.buffer_size) for _ in range(len(params))]
@@ -142,7 +143,9 @@ class Panel:
                     self.display_queues[stream_id].put(frame)
                 elif(self.ctrl.mode==2):
                     if stream_id % (2**self.ctrl.detect_channel) == 0 :
-                        self.processing_queues[stream_id].put(frame) 
+                        # self.processing_queues[stream_id].put(frame) 
+                        self.object_detection_queues[stream_id].put(frame)     
+
                     else:
                         self.display_queues[stream_id].put(frame)
         
@@ -190,7 +193,8 @@ class Panel:
                     
                     if( motion_detected and stream_id %  (2**self.core.detect_channel) == 0 ) :
                         # print(f"Motion detected in stream {stream_id} {motion_pixels}")
-                        self.processing_queues[stream_id].put(frame_resized)
+                        # self.processing_queues[stream_id].put(frame_resized)
+                        self.object_detection_queues[stream_id].put(frame)     
                     else:
                         # print(f"No motion detected in stream {stream_id}")
                         self.display_queues[stream_id].put(frame_resized)
@@ -234,7 +238,34 @@ class Panel:
         out.release()
         print(f"Saved: {filename}")
         return filename
-        
+    def stream_object_detection(self,executor):
+        round = 0 
+        while True:
+            time.sleep(0.01)
+            batch = 8
+            ids = []
+            frames = []
+            
+            # print(f"object_detection_queues [{self.object_detection_queues.qsize()}]")
+            try:
+                while(len(frames)<batch):
+                    frame = None
+                    round += 1
+                    idx = (round) % self.number_of_streams
+                    # print(f"object_detection_queues [{self.object_detection_queues[idx].qsize()}]")
+                    if(self.object_detection_queues[idx].qsize()>0):
+                        frame = self.object_detection_queues[idx].get()
+                    if(frame is not None):
+                        ids.append(idx)
+                        frames.append(frame)
+                        self.object_detection_queues[idx].task_done()
+
+                if(len(frames)>0):
+                    results = self.ctrl.model(frames, verbose=False)
+                    for i,frame in enumerate(frames):
+                        self.processing_queues[ids[i]].put(results[i])
+            except queue.Empty:
+                time.sleep(0.01)
     def object_detection(self, stream_id,executor):
 
         class_names = self.ctrl.model.names
@@ -249,29 +280,48 @@ class Panel:
             try:
                              
             
-                frame = self.processing_queues[stream_id].get()
+                # frame = self.processing_queues[stream_id].get()
+                # # print(f"[{stream_id}]  Processing frame {frame.shape} {self.capture_queues[stream_id].qsize()} {self.processing_queues[stream_id].qsize()} {self.display_queues[stream_id].qsize()} {self.  task_queue.qsize()}")
+                # while not self.processing_queues[stream_id].empty():
+                #     frame = self.processing_queues[stream_id].get()
+        
+
+                # # self.frames[stream_id] = frame
+                # # task_queue.put((process_frame, (stream_id)))
+                # # print(f"[{stream_id}] Processing frame {frame.shape}")
+                # if(True):
+                #     results = self.ctrl.model(frame, verbose=False)
+                #     # frame = results[0].plot()
+                # else:
+                #     self.display_queues[stream_id].put(frame)
+
+                # self.processing_queues[stream_id].task_done()
+
+
+                       
+                result = self.processing_queues[stream_id].get()
                 # print(f"[{stream_id}]  Processing frame {frame.shape} {self.capture_queues[stream_id].qsize()} {self.processing_queues[stream_id].qsize()} {self.display_queues[stream_id].qsize()} {self.  task_queue.qsize()}")
                 while not self.processing_queues[stream_id].empty():
-                    frame = self.processing_queues[stream_id].get()
+                    result = self.processing_queues[stream_id].get()
         
 
                 # self.frames[stream_id] = frame
                 # task_queue.put((process_frame, (stream_id)))
                 # print(f"[{stream_id}] Processing frame {frame.shape}")
-                if(True):
-                    results = self.ctrl.model(frame, verbose=False)
-                    # frame = results[0].plot()
-                else:
-                    self.display_queues[stream_id].put(frame)
+                # if(True):
+                #     results = self.ctrl.model(frame, verbose=False)
+                #     # frame = results[0].plot()
+                # else:
+                #     self.display_queues[stream_id].put(frame)
 
                 self.processing_queues[stream_id].task_done()
                     
             # Extract detections from the first frame
                 # detections = results[0].boxes.data.cpu().numpy()  # [x1, y1, x2, y2, confidence, class_id]
-                res = results[0].boxes.data.cpu().numpy()  # [x1, y1, x2, y2, confidence, class_id]
+                res = result.boxes.data.cpu().numpy()  # [x1, y1, x2, y2, confidence, class_id]
 
 
-                frame = results[0].plot()
+                frame = result.plot()
                 # detections = []
         #       for r in res:
         #           detections.append(r)
@@ -474,6 +524,9 @@ class Panel:
             t = threading.Thread(target=self.object_detection, args=(i,executor,))
             t.start()
             yolo_threads.append(t)
+
+        yolo_stream_thread = threading.Thread(target=self.stream_object_detection, args=(executor,))
+        yolo_stream_thread.start()
 
 
     def run_bk(self):
