@@ -57,7 +57,7 @@ class GunpaiYolo:
             self.fullframe_height = 1080
             
             self.detect_channel = 2
-            self.fps = 25
+            self.fps = 5
             self.mode = 3        
             self.last_compose = None
          

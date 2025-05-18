@@ -86,7 +86,7 @@ class Panel:
         while True:
             current_time = time.time()
             if current_time - last_sample_time < self.sample_interval:
-                time.sleep(0.01)
+                time.sleep(0.001)
                 # cap.grab()
                 continue
             
@@ -269,7 +269,9 @@ class Panel:
             # Extract detections from the first frame
                 # detections = results[0].boxes.data.cpu().numpy()  # [x1, y1, x2, y2, confidence, class_id]
                 res = results[0].boxes.data.cpu().numpy()  # [x1, y1, x2, y2, confidence, class_id]
-            
+
+
+                frame = results[0].plot()
                 # detections = []
         #       for r in res:
         #           detections.append(r)
@@ -350,8 +352,8 @@ class Panel:
                         
 
                     # print(f"[{stream_id}] Tracking object {track_id} {x1} {y1} {x2} {y2} {class_name} {speed}")
-                    cv2.rectangle(frame, (x1, y1), (x2, y2), color, 3)
-                    cv2.circle(frame, (int((x1+x2)/2), int((y1+y2)/2)), 10, color, 3)
+                    # cv2.rectangle(frame, (x1, y1), (x2, y2), color, 3)
+                    # cv2.circle(frame, (int((x1+x2)/2), int((y1+y2)/2)), 10, color, 3)
                     cv2.putText(frame, f"ID: {class_name} {track_id} {speed}", (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
                 
                 
@@ -570,6 +572,8 @@ class Panel:
 
             # Convert to numpy array (SORT requires numpy input)
             detections = np.array(res)
+
+            frame = results[0].plot()
         
             boxes = [det[:5] for det in detections]  # Extract [x1, y1, x2, y2, confidence]
             class_ids = [det[5] for det in detections]  # Extract class IDs
@@ -641,7 +645,7 @@ class Panel:
                         track_live[track_id]["spd"] = speed
                         
 
-                    cv2.rectangle(frame, (x1, y1), (x2, y2), color, 2)
+                    # cv2.rectangle(frame, (x1, y1), (x2, y2), color, 2)
                     cv2.putText(frame, f"ID: {class_name} {track_id} {speed}", (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
                 
                 

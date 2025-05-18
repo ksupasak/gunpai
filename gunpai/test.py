@@ -98,7 +98,7 @@ def submit(core):
     ids[f"cam14"] = "https://streaming.udoncity.go.th:1935/live/Bosch_IP2.27.stream/chunklist_w180646488.m3u8"
     ids[f"cam15"] = "https://streaming.udoncity.go.th:1935/live/Axis_12_22.stream/chunklist_w344142967.m3u8"
     
-    ids['cam0'] = "cam:1"
+    # ids['cam0'] = "cam:1"
 
     
     # Process the form data as needed
