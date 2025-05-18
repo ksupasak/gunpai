@@ -13,7 +13,7 @@ from collections import deque
 from concurrent.futures import ThreadPoolExecutor
 
 from models.rule import Rule
-        
+from models.channel import Channel
 class Panel:
     def __init__(self, id):
         self.id = id
@@ -30,9 +30,10 @@ class Panel:
         self.resize_height = 1080
 
         
-    def config(self, ctrl,  params):
-        
-        self.ctrl = ctrl
+    def config(self, core,  params):
+        self.core = core
+        self.ctrl = core.ctrl
+        ctrl = self.ctrl
         print(f"params {params}")
         
         row = 4
@@ -40,8 +41,16 @@ class Panel:
 
         buffer_size = self.ctrl.fps * self.ctrl.pre_record
 
-        for i, channel in  enumerate(params):
+        for i, channel_stream in  enumerate(params):
             
+
+               
+            
+            channel = Channel(self.core, i, f"cam{i}" , channel_stream)
+            self.channels.append(channel)
+
+
+
             ox = i%4 * int(ctrl.width/4)
             oy = i/4 * int(ctrl.height/4)
 
@@ -78,7 +87,7 @@ class Panel:
             current_time = time.time()
             if current_time - last_sample_time < self.sample_interval:
                 time.sleep(0.01)
-                cap.grab()
+                # cap.grab()
                 continue
             
             last_sample_time = current_time
@@ -179,7 +188,7 @@ class Panel:
                     if(self.ctrl.mode==4):
                         motion_detected = False
                     
-                    if( motion_detected and stream_id %  (2**self.ctrl.detect_channel) == 0 ) :
+                    if( motion_detected and stream_id %  (2**self.core.detect_channel) == 0 ) :
                         # print(f"Motion detected in stream {stream_id} {motion_pixels}")
                         self.processing_queues[stream_id].put(frame_resized)
                     else:

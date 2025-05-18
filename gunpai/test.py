@@ -8,7 +8,7 @@ from models import *
 from models.gunpai_yolo import GunpaiYolo
 from models.channel import Channel
 
-
+import json
 import subprocess
 import paho.mqtt.client as mqtt
 import threading
@@ -64,7 +64,7 @@ def submit(core):
     rtmp_key = "47yq-9gmc-jq33-e296-8x5s"
         
     # rtmp = f"rtmp://a.rtmp.youtube.com/live2/{rtmp_key}"
-    cam = "cam-1"
+    cam = "cam:1"
     # cam = "frigate-1"
     
     
@@ -76,12 +76,30 @@ def submit(core):
     
     for i in range(16):
         
-        ch = Channel(core, i, f"cam{i}" , cam)
-        channels.append(ch)
-        ids[ch.name] = ch
+        # ch = Channel(core, i, f"cam{i}" , cam)
+        # channels.append(ch)
+        ids[f"cam{i}"] = cam
         
+    ids[f"cam0"] = "https://streaming.udoncity.go.th:1935/live/Axis_IP754.stream/chunklist_w553778697.m3u8"
+    ids[f"cam1"] = "https://streaming.udoncity.go.th:1935/live/Axis_12_27.stream/chunklist_w237920461.m3u8"
+    ids[f"cam2"] = "https://streaming.udoncity.go.th:1935/live/Axis_12_53.stream/chunklist_w1896452595.m3u8"
+    ids[f"cam3"] = "https://streaming.udoncity.go.th:1935/live/Axis_IP727.stream/chunklist_w168425532.m3u8"
+    ids[f"cam4"] = "https://streaming.udoncity.go.th:1935/live/Axis_12_45.stream/chunklist_w1149216136.m3u8"
+    ids[f"cam5"] = "https://streaming.udoncity.go.th:1935/live/Axis_12_43.stream/chunklist_w1755684805.m3u8"
+    ids[f"cam6"] = "https://streaming.udoncity.go.th:1935/live/Axis_12_33.stream/chunklist_w1915903594.m3u8"
+    ids[f"cam7"] = "https://streaming.udoncity.go.th:1935/live/Axis_12_34.stream/chunklist_w145346344.m3u8"
+
+    ids[f"cam8"] = "https://streaming.udoncity.go.th:1935/live/Axis_IP724.stream/chunklist_w650501662.m3u8"
+    ids[f"cam9"] = "https://streaming.udoncity.go.th:1935/live/Bosch_IP2.9.stream/chunklist_w690498528.m3u8"
+    ids[f"cam10"] = "https://streaming.udoncity.go.th:1935/live/Bosch_IP2.17.stream/chunklist_w3546443.m3u8"
+    ids[f"cam11"] = "https://streaming.udoncity.go.th:1935/live/Bosch_IP2.2.stream/chunklist_w982573476.m3u8"
+    ids[f"cam12"] = "https://streaming.udoncity.go.th:1935/live/Axis_IP729.stream/chunklist_w73369343.m3u8"
+    ids[f"cam13"] = "https://streaming.udoncity.go.th:1935/live/Axis_12_30.stream/chunklist_w903824670.m3u8"
+    ids[f"cam14"] = "https://streaming.udoncity.go.th:1935/live/Bosch_IP2.27.stream/chunklist_w180646488.m3u8"
+    ids[f"cam15"] = "https://streaming.udoncity.go.th:1935/live/Axis_12_22.stream/chunklist_w344142967.m3u8"
     
-    # ids['cam1'] = "frigate-2"
+    ids['cam0'] = "cam:1"
+
     
     # Process the form data as needed
     options = {
@@ -118,7 +136,7 @@ def submit(core):
       "rtmp": rtmp,
       "rtmp_key": rtmp_key
     }
-
+    print(json.dumps(options))
     core.config(options,stop_event )
     
     

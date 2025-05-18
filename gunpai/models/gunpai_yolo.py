@@ -317,7 +317,7 @@ class GunpaiYolo:
  #     #
  #        print('odfijdif')
         panel = Panel(0)
-        panel.config(ctrl, options['panel-1'])
+        panel.config(self, options['panel-1'])
         ctrl.addPanel(panel)
      
         # panel = Panel(1)

@@ -29,7 +29,7 @@ class Controller:
         self.height = height
         self.mode = 3
         self.fps = 25
-        self.pre_record = 3
+        self.pre_record = 10
         self.record_duration = 3
         
     def addPanel(self, panel):

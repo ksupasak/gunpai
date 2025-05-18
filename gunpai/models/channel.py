@@ -6,6 +6,7 @@ import time
 import math
 import traceback
 import queue
+import json
 from math import sqrt
 
 from datetime import datetime
@@ -17,7 +18,7 @@ from models.rule import Rule
 
                         
        
-class Channel:
+class Channel(json.JSONEncoder):
    def __init__(self,core, id, name, source):
        self.id = id
        self.name = name
@@ -49,7 +50,7 @@ class Channel:
        ]
        if self.source is not None:
            
-           token = self.source.split("-")
+           token = self.source.split(":")
            type = token[0]
            channel = token[1]
            
@@ -61,7 +62,12 @@ class Channel:
               
            if type=="cam":
                capture_id = int(channel)-1
+           if type=="rtsp":
+               capture_id = self.source
+           if type=="https":
+               capture_id = self.source
                
+       print(f"capture_id {capture_id}")
        self.capture_id = capture_id
        self.cap =  cv2.VideoCapture(capture_id)
        self.ready = False
@@ -78,4 +84,6 @@ class Channel:
        for r in self.rules :
            
            r.evaluate(panel, stream_id, scene)
+   
+
            
