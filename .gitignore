@@ -7,3 +7,4 @@ gunpai/config.yaml
 gunpai/*.log
 gunpai/test/rust-opencv/target/*
 gunpai/test/rust-opencv/Cargo.*
+**/__pycache__/
