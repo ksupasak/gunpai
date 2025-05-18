@@ -2,9 +2,10 @@ from flask import Flask, request, jsonify, render_template, redirect, url_for
 from flask import Blueprint, render_template, redirect, url_for, request, flash
 from flask_login import LoginManager, login_user, logout_user, login_required, UserMixin
 
-import models.yolo
+import models.gunpai_yolo
 import models.yolo2x2
 
+from models.core import Core
 
 
 import subprocess
@@ -30,6 +31,10 @@ users = {"admin": {"password": "kamsk"}}
 stop_event = threading.Event()
 
 current_thread = None
+
+
+core = Core("C0001","edge-C000101")
+core.start()
 
 # User Class for Flask-Login
 class User(UserMixin):
@@ -73,6 +78,14 @@ def on_message(client, userdata, msg):
     })
     if(msg.payload.decode()=="restart"):
         restart_frigate()
+
+def send_message(message):
+    mqtt_client = mqtt.Client()
+    mqtt_client.connect(MQTT_BROKER, MQTT_PORT, 60)
+    mqtt_client.publish('events', message)
+    mqtt_client.disconnect()
+    
+    print(Core("Gunpai").version()) 
 
 # Background MQTT thread
 def start_mqtt():
@@ -163,7 +176,7 @@ def background_yolo( signal, options):
     print(f"Starting background task with data: ")
     # time.sleep(10)  # Simulate a long-running task
 
-    models.yolo.start_yolo(options, signal)
+    models.gunpai_yolo.start_yolo(options, signal)
 
     # mqtt_thread = threading.Thread(target=models.yolo.start_yolo)
     # mqtt_thread.daemon = True
@@ -210,6 +223,8 @@ def index():
     options = [
         {"key": "cam-1", "value": "Camera 1"},
         {"key": "cam-2", "value": "Camera 2"},
+        {"key": "cam-3", "value": "Camera 3"},
+        {"key": "cam-4", "value": "Camera 4"},
         {"key": "frigate-1", "value": "Frigate 1"},
         {"key": "frigate-2", "value": "Frigate 2"},
         {"key": "frigate-3", "value": "Frigate 3"},
@@ -245,6 +260,8 @@ def submit():
         "detect": data.get('detect'),
         "model": data.get('model'),
         "rtmp": data.get('rtmp'),
+        "event_mq_1": data.get('event_mq_1'),
+        "event_mq_2": data.get('event_mq_2'),
         "condition": {
             "min_count": data.get('min_count'),
             "max_count": data.get('max_count')
@@ -266,5 +283,7 @@ if __name__ == "__main__":
     mqtt_thread = threading.Thread(target=start_mqtt)
     mqtt_thread.daemon = True
     mqtt_thread.start()
+    # send_message("start system")
+    
     
     app.run(host="0.0.0.0", port=4444, debug=True)

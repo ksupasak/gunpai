@@ -57,7 +57,7 @@ while cap.isOpened():
         for obj in tracked_objects:
             x1, y1, x2, y2, track_id = map(int, obj)
             cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
-            cv2.putText(frame, f"ID: {track_id}", (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
+            # cv2.putText(frame, f"ID: {track_id}", (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
     except Exception as e:
         print(f"Caught an error: {e}")
     # Display the frame

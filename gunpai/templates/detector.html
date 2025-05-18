@@ -120,6 +120,18 @@
             <label for="detect" class="form-label">RTMP</label>
             <input type="text" class="form-control" name="rtmp" placeholder="" value="rtmp://localhost:1935/stream/yolo">
         </div>
+		
+        <div class="mb-3">
+            <label for="detect" class="form-label">Event queue 1</label>
+            <input type="text" class="form-control" name="event_mq_1" placeholder="" value="mqtt://localhost:1883/events/live">
+        </div>
+		
+        <div class="mb-3">
+            <label for="detect" class="form-label">Event queue 2</label>
+            <input type="text" class="form-control" name="event_mq_2" placeholder="" value="">
+        </div>
+		
+		
 
         <button type="submit" class="btn btn-success">Start</button>
     </form>

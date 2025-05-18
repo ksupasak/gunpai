@@ -7,20 +7,33 @@ mqtt:
   topic_prefix: frigate       # Topic prefix for Frigate events
 go2rtc:
   streams:
+    # cam1: # <- for RTSP streams 
+    #   # - rtsp://10.149.1.62:8554/stream/test # <- stream which supports video & aac audio
+    #   - ffmpeg:rtsp://192.168.0.201:554/live    # <- stream which supports video & aac audio
+    # cam2: # <- for RTSP streams
+    #   - ffmpeg:rtsp://192.168.0.202:554/live    # <- stream which supports video & aac audio
+    # cam3: # <- for RTSP streams
+    #   - ffmpeg:rtsp://192.168.0.203:554/live    # <- stream which supports video & aac audio
+    # cam4: # <- for RTSP streams
+    #   - ffmpeg:rtsp://192.168.0.204:554/live    # <- stream which supports video & aac audio 
     cam1: # <- for RTSP streams 
-      # - rtsp://10.149.1.62:8554/stream/test # <- stream which supports video & aac audio
-      - ffmpeg:rtsp://192.168.0.201:554/live    # <- stream which supports video & aac audio
-    cam2: # <- for RTSP streams
-      - ffmpeg:rtsp://192.168.0.202:554/live    # <- stream which supports video & aac audio
-    cam3: # <- for RTSP streams
-      - ffmpeg:rtsp://192.168.0.203:554/live    # <- stream which supports video & aac audio
-    cam4: # <- for RTSP streams
-      - ffmpeg:rtsp://192.168.0.204:554/live    # <- stream which supports video & aac audio z
-    bodycam:
+      - ffmpeg:rtsp://admin:DtFortune3@192.168.0.9:554/Streaming/channels/101    # <- stream which supports video & aac audio
+    cam2: # <- for RTSP streams 
+      - ffmpeg:rtsp://rtsp-server:8554/live    # <- stream which supports video & aac audio
+    cam3: # <- for RTSP streams 
+      - ffmpeg:rtsp://rtsp-server:8554/live    # <- stream which supports video & aac audio
+    cam4: # <- for RTSP streams 
+      - ffmpeg:rtsp://rtsp-server:8554/live    # <- stream which supports video & aac audio
+    
+
+
+    cam5:
       - rtsp://10.149.1.62:8554/stream/test 
 cameras:
   cam1: # <------ Name the camera
     enabled: true
+    detect:
+         enabled: False  # Disable detection (motion detection and object detection)
     ffmpeg:
       inputs:
         - path: rtsp://127.0.0.1:8554/cam1 # <----- The stream you want to use for detection
@@ -57,6 +70,8 @@ cameras:
     #   improve_contrast: 'true'
   cam2: # <------ Name the camera
     enabled: true
+    detect:
+         enabled: False  # Disable detection (motion detection and object detection)
     ffmpeg:
       inputs:
         - path: rtsp://127.0.0.1:8554/cam2 # <----- The stream you want to use for detection
@@ -67,6 +82,8 @@ cameras:
           #   - audio
   cam3: # <------ Name the camera
     enabled: true
+    detect:
+         enabled: False  # Disable detection (motion detection and object detection)
     ffmpeg:
       inputs:
         - path: rtsp://127.0.0.1:8554/cam3 # <----- The stream you want to use for detection
@@ -77,6 +94,8 @@ cameras:
           #   - audio
   cam4: # <------ Name the camera
     enabled: true
+    detect:
+         enabled: False  # Disable detection (motion detection and object detection)
     ffmpeg:
       inputs:
         - path: rtsp://127.0.0.1:8554/cam4 # <----- The stream you want to use for detection
@@ -85,12 +104,12 @@ cameras:
           #   - detect
           #   - record
           #   - audio
-  cam5: # <------ Name the camera
-    enabled: true
-    ffmpeg:
-      inputs:
-        - path: rtsp://127.0.0.1:8554/bodycam # <----- The stream you want to use for detection
-          input_args: preset-rtsp-restream
+  # cam5: # <------ Name the camera
+  #   enabled: true
+  #   ffmpeg:
+  #     inputs:
+  #       - path: rtsp://127.0.0.1:8554/cam5 # <----- The stream you want to use for detection
+  #         input_args: preset-rtsp-restream
           # roles:
           #   - detect
           #   - record

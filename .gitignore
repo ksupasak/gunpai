@@ -1,2 +1,9 @@
 
 frigate/config/config.yaml
+gunpai/events/*
+gunpai/images/*
+gunpai/videos/*
+gunpai/config.yaml
+gunpai/*.log
+gunpai/test/rust-opencv/target/*
+gunpai/test/rust-opencv/Cargo.*

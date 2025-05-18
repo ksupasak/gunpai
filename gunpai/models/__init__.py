@@ -1,2 +1,1 @@
-# Optional: Export specific functions or classes from my_service
-from .yolo import start_yolo
+__all__ = [ "controller", "panel", "channel", "rule", "gunpai_yolo"]
