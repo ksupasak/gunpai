@@ -39,7 +39,47 @@ class Channel(json.JSONEncoder):
        self.panel = panel
        self.ox = ox
        self.oy = oy
+       self.ready = False
         
+    #    rtsp_urls = [
+    #        'rtsp://127.0.0.1:8554/cam1',
+    #        'rtsp://127.0.0.1:8554/cam2',
+    #        'rtsp://127.0.0.1:8554/cam3',
+    #        'rtsp://127.0.0.1:8554/cam4',
+    #        'rtsp://127.0.0.1:8554/cam5',
+    #        'rtsp://10.149.1.62:8554/stream/test',
+    #    ]
+    #    if self.source is not None:
+           
+    #        token = self.source.split(":")
+    #        type = token[0]
+    #        channel = token[1]
+           
+    #        print(f"{type} {channel}")
+    #        capture_id = None
+    #        if type=="frigate":
+    #            rtsp_url = rtsp_urls[int(channel)-1]
+    #            capture_id = rtsp_url 
+              
+    #        if type=="cam":
+    #            capture_id = int(channel)-1
+    #        if type=="rtsp":
+    #            capture_id = self.source
+    #        if type=="https":
+    #            capture_id = self.source
+               
+    #    print(f"capture_id {capture_id}")
+    #    self.capture_id = capture_id
+    #    self.cap =  cv2.VideoCapture(capture_id)
+    #    self.ready = False
+    #    if self.cap.isOpened():
+    #        self.ready = True
+    #        return self.cap
+    #    else:
+    #        return None
+
+   def start(self):
+               
        rtsp_urls = [
            'rtsp://127.0.0.1:8554/cam1',
            'rtsp://127.0.0.1:8554/cam2',
@@ -76,8 +116,7 @@ class Channel(json.JSONEncoder):
            return self.cap
        else:
            return None
-    
-
+       
 
    def evaluate(self, panel, stream_id, scene):
        

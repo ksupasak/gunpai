@@ -75,9 +75,7 @@ def submit(core):
     ids = {}
     
     for i in range(16):
-        
-        # ch = Channel(core, i, f"cam{i}" , cam)
-        # channels.append(ch)
+
         ids[f"cam{i}"] = cam
         
     ids[f"cam0"] = "https://streaming.udoncity.go.th:1935/live/Axis_IP754.stream/chunklist_w553778697.m3u8"
@@ -88,7 +86,7 @@ def submit(core):
     ids[f"cam5"] = "https://streaming.udoncity.go.th:1935/live/Axis_12_43.stream/chunklist_w1755684805.m3u8"
     ids[f"cam6"] = "https://streaming.udoncity.go.th:1935/live/Axis_12_33.stream/chunklist_w1915903594.m3u8"
     ids[f"cam7"] = "https://streaming.udoncity.go.th:1935/live/Axis_12_34.stream/chunklist_w145346344.m3u8"
-
+    
     ids[f"cam8"] = "https://streaming.udoncity.go.th:1935/live/Axis_IP724.stream/chunklist_w650501662.m3u8"
     ids[f"cam9"] = "https://streaming.udoncity.go.th:1935/live/Bosch_IP2.9.stream/chunklist_w690498528.m3u8"
     ids[f"cam10"] = "https://streaming.udoncity.go.th:1935/live/Bosch_IP2.17.stream/chunklist_w3546443.m3u8"
@@ -97,7 +95,7 @@ def submit(core):
     ids[f"cam13"] = "https://streaming.udoncity.go.th:1935/live/Axis_12_30.stream/chunklist_w903824670.m3u8"
     ids[f"cam14"] = "https://streaming.udoncity.go.th:1935/live/Bosch_IP2.27.stream/chunklist_w180646488.m3u8"
     ids[f"cam15"] = "https://streaming.udoncity.go.th:1935/live/Axis_12_22.stream/chunklist_w344142967.m3u8"
-    
+    #
     # ids['cam0'] = "cam:1"
 
     

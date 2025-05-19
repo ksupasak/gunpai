@@ -19,12 +19,12 @@ class Panel:
         self.id = id
         self.tracker = Sort(max_age=100, min_hits=10, iou_threshold=0.5)
         self.channels = []
-        self.caps = []
+        self.caps = {}
         self.pre_records = []
-
+        self.number_of_streams = 16
         self.ready = False
         self.buffer_size = 10
-        self.number_of_streams = 16
+      
         self.sample_interval = 0.01
         self.resize_width = 1920
         self.resize_height = 1080
@@ -35,7 +35,7 @@ class Panel:
         self.ctrl = core.ctrl
         ctrl = self.ctrl
         print(f"params {params}")
-        
+        self.number_of_streams = len(params)
         row = 4
         col = 4
 
@@ -47,8 +47,8 @@ class Panel:
                
             
             channel = Channel(self.core, i, f"cam{i}" , channel_stream)
-            self.channels.append(channel)
-
+            
+            
 
 
             ox = i%4 * int(ctrl.width/4)
@@ -56,12 +56,13 @@ class Panel:
 
             
             channel.open(self, ox, oy)
-            if(channel.ready==True):
-                self.channels.append(channel)
-                self.caps.append(channel.cap) 
+
+            # if(channel.ready==True):
+            self.channels.append(channel)
+                # self.caps.append(channel.cap) 
         # self.number_of_streams = len(params)        
         self.motion_detection_queues = [queue.Queue(maxsize=self.buffer_size) for _ in range(len(params))]
-        self.object_detection_queues =[queue.Queue(maxsize=self.buffer_size) for _ in range(len(params))]
+        self.object_detection_queues = {}
         self.processing_queues = [queue.Queue(maxsize=self.buffer_size) for _ in range(len(params))]
         self.display_queues = [queue.Queue(maxsize=self.buffer_size) for _ in range(len(params))]
         self.capture_queues = [queue.Queue(maxsize=self.buffer_size) for _ in range(len(params))]
@@ -79,8 +80,13 @@ class Panel:
         self.sample_interval = 1/self.ctrl.fps
    
     def capture_frames(self, stream_id):
-
-        cap = self.caps[stream_id]
+      
+        if(self.channels[stream_id].ready==False):
+            self.channels[stream_id].start()
+            cap = self.channels[stream_id].cap
+            self.caps[stream_id] = cap
+        else:
+            cap = self.caps[stream_id]
         self.sample_interval = 1/self.ctrl.fps
       
         last_sample_time = time.time()
@@ -109,10 +115,13 @@ class Panel:
             # Put frame in capture queue if there's space
             try:
                 if self.capture_queues[stream_id].qsize() < self.buffer_size:
-                    # print(f"Caputure queue {stream_id} size: {capture_queues[stream_id].qsize()}")
+                    # print(f"Caputure queue {stream_id} size: {self.capture_queues[stream_id].qsize()}")
 
                     self.capture_queues[stream_id].put(frame, timeout=0.1)
                 else:
+                    self.capture_queues[stream_id].get()
+                    self.capture_queues[stream_id].put(frame, timeout=0.1)
+
                     # Drop frame if queue is full
                     pass
             except queue.Full:
@@ -138,13 +147,15 @@ class Panel:
 
                 frame = cv2.resize(frame, (self.grid_width, self.grid_height))
 
+                self.object_detection_queues[stream_id] = None
+
 
                 if(self.ctrl.mode==1):
                     self.display_queues[stream_id].put(frame)
                 elif(self.ctrl.mode==2):
                     if stream_id % (2**self.ctrl.detect_channel) == 0 :
                         # self.processing_queues[stream_id].put(frame) 
-                        self.object_detection_queues[stream_id].put(frame)     
+                        self.object_detection_queues[stream_id] = frame     
 
                     else:
                         self.display_queues[stream_id].put(frame)
@@ -183,7 +194,7 @@ class Panel:
                     # Count nonzero pixels to detect motion
                     motion_pixels = cv2.countNonZero(thresh)
 
-                    if motion_pixels > 500:
+                    if motion_pixels > 200:
                         motion_detected = True
                     else:
                         motion_detected = False
@@ -194,10 +205,12 @@ class Panel:
                     if( motion_detected and stream_id %  (2**self.core.detect_channel) == 0 ) :
                         # print(f"Motion detected in stream {stream_id} {motion_pixels}")
                         # self.processing_queues[stream_id].put(frame_resized)
-                        self.object_detection_queues[stream_id].put(frame)     
+                        # self.object_detection_queues[stream_id].put(frame) 
+                        self.object_detection_queues[stream_id] = frame        
                     else:
                         # print(f"No motion detected in stream {stream_id}")
                         self.display_queues[stream_id].put(frame_resized)
+                        self.object_detection_queues[stream_id] = None
                     # with lock:
                     #     if motion_detected and not motion_flags[stream_id] and stream_id%2==0:
                     #         motion_flags[stream_id] = True
@@ -248,22 +261,37 @@ class Panel:
             
             # print(f"object_detection_queues [{self.object_detection_queues.qsize()}]")
             try:
-                while(len(frames)<batch):
-                    frame = None
-                    round += 1
-                    idx = (round) % self.number_of_streams
-                    # print(f"object_detection_queues [{self.object_detection_queues[idx].qsize()}]")
-                    if(self.object_detection_queues[idx].qsize()>0):
-                        frame = self.object_detection_queues[idx].get()
-                    if(frame is not None):
-                        ids.append(idx)
-                        frames.append(frame)
-                        self.object_detection_queues[idx].task_done()
 
-                if(len(frames)>0):
+                for i in list(self.object_detection_queues.keys()):
+                    # print(f"object_detection_queues {i} {self.object_detection_queues[i]}")
+                    frame = self.object_detection_queues[i]
+                    if frame is not None:
+                        frames.append(frame)
+                        ids.append(i)
+                print(f"frames {len(frames)}")
+                if len(frames)>0:
                     results = self.ctrl.model(frames, verbose=False)
-                    for i,frame in enumerate(frames):
-                        self.processing_queues[ids[i]].put(results[i])
+                    for i,r in enumerate(results):
+                        self.processing_queues[ids[i]].put(r)
+              
+
+
+                # while(len(frames)<batch):
+                #     frame = None
+                #     round += 1
+                #     idx = (round) % self.number_of_streams
+                #     # print(f"object_detection_queues [{self.object_detection_queues[idx].qsize()}]")
+                #     if(self.object_detection_queues[idx].qsize()>0):
+                #         frame = self.object_detection_queues[idx].get()
+                #     if(frame is not None):
+                #         ids.append(idx)
+                #         frames.append(frame)
+                #         self.object_detection_queues[idx].task_done()
+
+                # if(len(frames)>0):
+                #     results = self.ctrl.model(frames, verbose=False)
+                #     for i,frame in enumerate(frames):
+                #         self.processing_queues[ids[i]].put(results[i])
             except queue.Empty:
                 time.sleep(0.01)
     def object_detection(self, stream_id,executor):
