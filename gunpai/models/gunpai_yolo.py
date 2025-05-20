@@ -50,11 +50,11 @@ class GunpaiYolo:
             self.fullframe_width = 3840
             self.fullframe_height = 2160
             
-            self.stream_width = 1920
-            self.stream_height = 1080
+            # self.stream_width = 1920
+            # self.stream_height = 1080
 
-            self.fullframe_width = 1920
-            self.fullframe_height = 1080
+            # self.fullframe_width = 1920
+            # self.fullframe_height = 1080
             
             self.detect_channel = 2
             self.fps = 5

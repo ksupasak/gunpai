@@ -26,8 +26,8 @@ class Panel:
         self.buffer_size = 10
       
         self.sample_interval = 0.01
-        self.resize_width = 1920
-        self.resize_height = 1080
+        self.resize_width = int(1920/2)
+        self.resize_height = int(1080/2)
 
         
     def config(self, core,  params):
@@ -254,7 +254,7 @@ class Panel:
     def stream_object_detection(self,executor):
         round = 0 
         while True:
-            time.sleep(0.01)
+            time.sleep(0.005)
             batch = 8
             ids = []
             frames = []
