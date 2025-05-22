@@ -134,6 +134,8 @@ def submit(core):
       "rtmp": rtmp,
       "rtmp_key": rtmp_key
     }
+
+    #   "model": "yolo11n.mlpackage",
     print(json.dumps(options))
     core.config(options,stop_event )
     

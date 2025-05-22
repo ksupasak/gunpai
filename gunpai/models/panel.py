@@ -28,7 +28,8 @@ class Panel:
         self.sample_interval = 0.01
         self.resize_width = int(1920/2)
         self.resize_height = int(1080/2)
-
+        # self.resize_width = int(1920)
+        # self.resize_height = int(1080)
         
     def config(self, core,  params):
         self.core = core
@@ -39,7 +40,7 @@ class Panel:
         row = 4
         col = 4
 
-        buffer_size = self.ctrl.fps * self.ctrl.pre_record
+        record_buffer_size = self.ctrl.fps * self.ctrl.pre_record
 
         for i, channel_stream in  enumerate(params):
             
@@ -60,13 +61,14 @@ class Panel:
             # if(channel.ready==True):
             self.channels.append(channel)
                 # self.caps.append(channel.cap) 
-        # self.number_of_streams = len(params)        
+        # self.number_of_streams = len(params)    
+        self.drop_adj = [0] * len(params)  
         self.motion_detection_queues = [queue.Queue(maxsize=self.buffer_size) for _ in range(len(params))]
         self.object_detection_queues = {}
         self.processing_queues = [queue.Queue(maxsize=self.buffer_size) for _ in range(len(params))]
         self.display_queues = [queue.Queue(maxsize=self.buffer_size) for _ in range(len(params))]
         self.capture_queues = [queue.Queue(maxsize=self.buffer_size) for _ in range(len(params))]
-        self.pre_records = [deque(maxlen=buffer_size) for _ in range(len(params))]
+        self.pre_records = [deque(maxlen=record_buffer_size) for _ in range(len(params))]
         self.motion_flags = [False] * len(params)  
         self.grid_cols = int(sqrt(self.number_of_streams))   
         self.grid_rows = int(sqrt(self.number_of_streams))  
@@ -92,14 +94,21 @@ class Panel:
         last_sample_time = time.time()
         while True:
             current_time = time.time()
-            if current_time - last_sample_time < self.sample_interval:
+            if  current_time - last_sample_time < self.sample_interval:
                 time.sleep(0.001)
                 # cap.grab()
                 continue
-            
+            if self.drop_adj[stream_id]>0:
+                for i in range(self.drop_adj[stream_id]):
+                    cap.grab()
+                self.drop_adj[stream_id] = 0
+                continue
+                
             last_sample_time = current_time
             time.sleep(0.001)
             ret, frame = cap.read()
+            # if(stream_id==0):
+            #     print(f"{datetime.now()}")
             # print(f"Capture frame {cv2.CAP_PROP_FPS} {stream_id} size: {frame.shape}")
             # print(f"Capture frame {stream_id} size: {frame.shape}")
             if not ret:
@@ -116,9 +125,10 @@ class Panel:
             try:
                 if self.capture_queues[stream_id].qsize() < self.buffer_size:
                     # print(f"Caputure queue {stream_id} size: {self.capture_queues[stream_id].qsize()}")
-
+                    # print(f"1Caputure queue {stream_id} size: {self.capture_queues[stream_id].qsize()}")
                     self.capture_queues[stream_id].put(frame, timeout=0.1)
                 else:
+                    # print(f"Caputure queue {stream_id} size: {self.capture_queues[stream_id].qsize()}")
                     self.capture_queues[stream_id].get()
                     self.capture_queues[stream_id].put(frame, timeout=0.1)
 
@@ -142,9 +152,12 @@ class Panel:
                 # print(f"Motion queue {stream_id} size: {capture_queues[stream_id].qsize()}")
                 time.sleep(0.001)
                 frame = self.capture_queues[stream_id].get()
+                drop = 0
                 while not self.capture_queues[stream_id].empty():
                     self.capture_queues[stream_id].get()
-
+                    drop += 1
+                self.drop_adj[stream_id] = drop
+                
                 frame = cv2.resize(frame, (self.grid_width, self.grid_height))
 
                 self.object_detection_queues[stream_id] = None
@@ -209,7 +222,7 @@ class Panel:
                         self.object_detection_queues[stream_id] = frame        
                     else:
                         # print(f"No motion detected in stream {stream_id}")
-                        self.display_queues[stream_id].put(frame_resized)
+                        self.display_queues[stream_id].put(frame)
                         self.object_detection_queues[stream_id] = None
                     # with lock:
                     #     if motion_detected and not motion_flags[stream_id] and stream_id%2==0:
@@ -296,7 +309,10 @@ class Panel:
                 time.sleep(0.01)
     def object_detection(self, stream_id,executor):
 
-        class_names = self.ctrl.model.names
+        class_names = self.ctrl.class_names
+
+
+        
         track_ids = {}
         track_live = {}
         track_loc_map ={}
@@ -309,7 +325,7 @@ class Panel:
                              
             
                 # frame = self.processing_queues[stream_id].get()
-                # # print(f"[{stream_id}]  Processing frame {frame.shape} {self.capture_queues[stream_id].qsize()} {self.processing_queues[stream_id].qsize()} {self.display_queues[stream_id].qsize()} {self.  task_queue.qsize()}")
+                # print(f"[{stream_id}]  Processing {self.capture_queues[stream_id].qsize()} {self.processing_queues[stream_id].qsize()} {self.display_queues[stream_id].qsize()} {self.  task_queue.qsize()}")
                 # while not self.processing_queues[stream_id].empty():
                 #     frame = self.processing_queues[stream_id].get()
         
@@ -350,6 +366,7 @@ class Panel:
 
 
                 frame = result.plot()
+                # frame = result.orig_img
                 # detections = []
         #       for r in res:
         #           detections.append(r)
@@ -444,7 +461,7 @@ class Panel:
                     ch_map[class_name].append(track_live[track_id])
                     
                     
-                # print(ch_map)
+                # # print(ch_map)
                 
                 
                 self.channels[stream_id].evaluate(self, stream_id, ch_map)
@@ -482,7 +499,7 @@ class Panel:
                 # last_frames[stream_id] = cv2.resize(frame, (grid_width, grid_height))
                 
                 self.frames[stream_id] = frame
-
+                # print(f"{self.last_frame.shape}")
                 row = stream_id // self.grid_cols
                 col = stream_id % self.grid_cols
                 self.last_frame[row*self.grid_height:(row+1)*self.grid_height, col*self.grid_width:(col+1)*self.grid_width] = frame
