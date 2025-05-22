@@ -207,7 +207,7 @@ class Panel:
                     # Count nonzero pixels to detect motion
                     motion_pixels = cv2.countNonZero(thresh)
 
-                    if motion_pixels > 200:
+                    if motion_pixels > 100:
                         motion_detected = True
                     else:
                         motion_detected = False
